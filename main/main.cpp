@@ -20,12 +20,12 @@ extern "C" void app_main()
 {
 
   WifiDriver *wifi_driver = WifiDriver::get_instance();
-  wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
+  wifi_driver->init_STA("centaurus", "d3sn3tw1f1");
 
   HTTPServer *http_server = HTTPServer::get_instance();
   
   FileSystem *file_system = FileSystem::get_instance();
-  file_system->mount("/data");
+  file_system->mount_all();
 
   char file_data[11] = {};
 
