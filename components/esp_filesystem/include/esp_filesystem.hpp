@@ -23,6 +23,7 @@ public:
   esp_err_t unmount(const char *base_path);
   esp_err_t unmount_all();
 
+  esp_err_t find(const char *file_name);
   size_t read(const char *file_name, char *output, size_t size);
   esp_err_t abort();
 

@@ -158,15 +158,9 @@ esp_err_t FileSystem::unmount_all()
 size_t FileSystem::read(const char *file_name, char *output, size_t size)
 {
 
-  if (this->file == NULL)
+  if (this->find(file_name) != ESP_OK)
   {
-    this->file = fopen(file_name, "r");
-
-    if (this->file == NULL)
-    {
-      ESP_LOGE(TAG, "File not found: %s", file_name);
-      return 0;
-    }
+    return 0;
   }
 
   // Read 'size' bytes:
@@ -179,6 +173,23 @@ size_t FileSystem::read(const char *file_name, char *output, size_t size)
   }
 
   return read_size;
+}
+
+esp_err_t FileSystem::find(const char *file_name)
+{
+
+  if (this->file == NULL)
+  {
+    this->file = fopen(file_name, "r");
+
+    if (this->file == NULL)
+    {
+      ESP_LOGE(TAG, "File not found: %s", file_name);
+      return ESP_ERR_NOT_FOUND;
+    }
+  }
+
+  return ESP_OK;
 }
 
 esp_err_t FileSystem::abort()
