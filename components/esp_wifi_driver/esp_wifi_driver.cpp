@@ -1,6 +1,5 @@
 #include "esp_wifi_driver.hpp"
 
-
 #include <freertos/FreeRTOS.h>
 
 #include <esp_log.h>
@@ -80,8 +79,8 @@ esp_err_t WifiDriver::init_AP(std::string ip)
 esp_err_t WifiDriver::init_AP(std::string ssid, std::string password)
 {
   return this->init_AP(ssid,
-                             password,
-                             WIFI_DRIVER_DEFAULT_IP);
+                       password,
+                       WIFI_DRIVER_DEFAULT_IP);
 }
 
 esp_err_t WifiDriver::init_AP(std::string ssid, std::string password, std::string ip)
@@ -129,7 +128,7 @@ esp_err_t WifiDriver::init_STA(std::string ssid, std::string password)
 
 esp_err_t *WifiDriver::setup()
 {
-  
+
   ESP_ERROR_CHECK(esp_wifi_set_mode(this->mode));
 
   // Wifi AP block:

@@ -1,0 +1,66 @@
+{
+  "info": {
+    "description": "Dispositivo: Relay Anygrid",
+    "resets": 0,
+    "config_updates": 0,
+    "if_updates": 0,
+    "available_mem": 0
+  },
+  "firmware": {
+    "fw_version": "1.0",
+    "fw_updates": 0,
+    "fw_timestamp": 0
+  },
+  "general": {
+    "hw_version": "0.0.1",
+    "up_time": 0,
+    "init_time": 0,
+    "install_time": 0
+  },
+  "login": {
+    "username": "admin",
+    "password": "ati12345"
+  },
+  "wifi": {
+    "enabled": false,
+    "ssid": "MDB32RELAY_WIFI",
+    "password": "ati12345"
+  },
+  "admin": {
+    "username": "admin",
+    "password": "ati253089"
+  },
+  "ethernet": {
+    "ip": [192, 168, 2, 242],
+    "mask": [255, 255, 255, 0],
+    "gw": [192, 168, 2, 254]
+  },
+  "server": {
+    "ip": [192, 168, 2, 242],
+    "port": 8080
+  },
+  "channel-1": {
+    "enabled": true,
+    "type": 0,
+    "uart-port": 1,
+    "tcp-socket": 0,
+    "tcp-port": 502,
+    "timeout": 1000,
+    "baudrate": 9600,
+    "data-bits": 3,
+    "parity": 0,
+    "stop-bits": 1
+  },
+  "channel-2": {
+    "enabled": true,
+    "type": 0,
+    "uart-port": 2,
+    "tcp-socket": 0,
+    "tcp-port": 503,
+    "timeout": 1000,
+    "baudrate": 115200,
+    "data-bits": 3,
+    "parity": 0,
+    "stop-bits": 1
+  }
+}
