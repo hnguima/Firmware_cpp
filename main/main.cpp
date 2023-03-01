@@ -13,33 +13,22 @@
 #include "http_server.hpp"
 #include "stepper_driver.hpp"
 #include "esp_filesystem.hpp"
+#include "firmware_update.hpp"
 
 const auto sleep_time = std::chrono::milliseconds{10000};
 
 extern "C" void app_main()
 {
-
   WifiDriver *wifi_driver = WifiDriver::get_instance();
-  wifi_driver->init_STA("centaurus", "d3sn3tw1f1");
+  wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
 
   HTTPServer *http_server = HTTPServer::get_instance();
-  
+
+  FirmwareUpdate fw_update;
+
   FileSystem *file_system = FileSystem::get_instance();
   file_system->mount_all();
 
-  char file_data[11] = {};
-
-  int size_read = file_system->read("/data/config", file_data, 10);
-  ESP_LOGI("file", "%s \nsize: %d\n ", file_data, size_read);
-
-  size_read = file_system->read("/data/config", file_data, 10);
-  ESP_LOGI("file", "%s \nsize: %d\n ", file_data, size_read);
-
-  size_read = file_system->read("/data/config", file_data, 10);
-  ESP_LOGI("file", "%s \nsize: %d\n ", file_data, size_read);
-
-  size_read = file_system->read("/data/config", file_data, 10);
-  ESP_LOGI("file", "%s \nsize: %d\n ", file_data, size_read);
   // Stepper *new_stepper1 = new Stepper();
   // Stepper *new_stepper2 = new Stepper();
   // Stepper *new_stepper3 = new Stepper();
