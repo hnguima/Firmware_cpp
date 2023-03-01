@@ -10,11 +10,16 @@
 #include <esp_log.h>
 
 // #include "esp_wifi_driver.hpp"
-#include "http_server.hpp"
 #include "stepper_driver.hpp"
 #include "esp_filesystem.hpp"
+
+#include "esp_wifi_driver.hpp"
 #include "esp_ethernet.hpp"
 #include "firmware_update.hpp"
+#include "http_server.hpp"
+
+#include "esp_settings.hpp"
+#include "main.pb.h"
 
 #include <driver/gpio.h>
 
@@ -24,10 +29,13 @@
 const auto sleep_time = std::chrono::milliseconds{10000};
 
 
+
+
 extern "C" void app_main()
 
 {
   // Saidas digitais
+  gpio_config_t io_conf;
   io_conf.intr_type = GPIO_INTR_DISABLE;
   io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
   io_conf.mode = GPIO_MODE_OUTPUT;
@@ -37,11 +45,14 @@ extern "C" void app_main()
 
   Ethernet *eth_driver = Ethernet::get_instance();
 
-  WifiDriver *wifi_driver = WifiDriver::get_instance();
-  wifi_driver->init_STA("centaurus", "d3sn3tw1f1");
+
+  // WifiDriver *wifi_driver = WifiDriver::get_instance();
+  // wifi_driver->init_STA("centaurus", "d3sn3tw1f1");
 
   HTTPServer *http_server = HTTPServer::get_instance();
-  
+
+  Settings<WifiConfig> config;
+
   FirmwareUpdate fw_update;
 
   FileSystem *file_system = FileSystem::get_instance();

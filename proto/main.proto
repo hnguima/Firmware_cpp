@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+import "wifi.proto";
+
+
+message MainConfig {
+  WifiConfig wifi = 1;
+  int32 teste = 2;
+}

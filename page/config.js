@@ -82,10 +82,12 @@ tabs["net"].container.appendChild(new EthernetPanel());
 tabs["net"].container.appendChild(new WifiPanel());
 tabs["net"].container.appendChild(new ServerPanel());
 
-tabs["channel"].container.appendChild(new ChannelPanel({
-  name: "channel-1",
-  title: "Canal 1"
-}));
+tabs["channel"].container.appendChild(
+  new ChannelPanel({
+    name: "channel-1",
+    title: "Canal 1",
+  })
+);
 tabs["channel"].container.appendChild(
   new ChannelPanel({
     name: "channel-2",
@@ -97,12 +99,35 @@ tabs["tools"].container.appendChild(new GeneralPanel());
 tabs["tools"].container.appendChild(new FirmwarePanel());
 tabs["tools"].container.appendChild(new ConfigPanel());
 
-// for (const panel in Panels) {
-//   const newPanel = new Panels[panel]();
+import { default as root } from "./proto.js";
 
-//   if (tabs[newPanel.tab]) {
-//     tabs[newPanel.tab].container.appendChild(newPanel);
-//   }else{
-//     delete window.newPanel
-//   }
-// }
+// Exemplary payload
+var payload = { wifi: { ssid: "asdfasdf", password: "testes" } };
+
+// Verify the payload if necessary (i.e. when possibly incomplete or invalid)
+var errMsg = root.MainConfig.verify(payload);
+if (errMsg) throw Error(errMsg);
+
+// Create a new message
+var message = root.MainConfig.create(payload); // or use .fromObject if conversion is necessary
+console.log(message);
+
+// Encode a message to an Uint8Array (browser) or Buffer (node)
+var buffer = root.MainConfig.encode(message).finish();
+console.log(buffer);
+// ... do something with buffer
+
+// Decode an Uint8Array (browser) or Buffer (node) to a message
+var message = root.MainConfig.decode(buffer);
+console.log(message);
+// ... do something with message
+
+// If the application uses length-delimited buffers, there is also encodeDelimited and decodeDelimited.
+
+// Maybe convert the message back to a plain object
+var object = root.MainConfig.toObject(message, {
+  longs: String,
+  enums: String,
+  bytes: String,
+  // see ConversionOptions
+});
