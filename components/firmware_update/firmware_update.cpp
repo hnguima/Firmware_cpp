@@ -140,7 +140,13 @@ esp_err_t fw_update_uri_handler(httpd_req_t *req)
   }
 
   // verify if the hashes match
-  if (!(memcmp(hash, recv_hash, 32) == 0))
+  char hash_str[64];
+  for (size_t i = 0; i < 32; i++)
+  {
+    sprintf(hash_str + (i*2), "%02x", hash[i]);
+  }
+
+  if (!(strncmp(hash_str, recv_hash, 64) == 0))
   {
     ESP_LOGI(TAG, "SHA265 hashes don't match!");
     return ESP_FAIL;
