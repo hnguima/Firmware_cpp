@@ -27,7 +27,7 @@ WifiDriver::WifiDriver()
 
   ESP_ERROR_CHECK(esp_netif_init());
 
-  ESP_ERROR_CHECK(esp_event_loop_create_default());
+  ESP_ERROR_CHECK_WITHOUT_ABORT(esp_event_loop_create_default());
 
   esp_event_handler_instance_t instance_any_id;
   esp_event_handler_instance_t instance_got_ip;

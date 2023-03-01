@@ -16,10 +16,10 @@ static bool IRAM_ATTR stepper_timer_callback(gptimer_handle_t timer, const gptim
 {
   StepperTimer *stepper_timer = (StepperTimer *)user_data;
 
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
+  // struct timeval tv;
+  // gettimeofday(&tv, NULL);
 
-  ESP_DRAM_LOGI(TAG, "tick count: %lld", (int64_t)tv.tv_sec * 1000000L + (int64_t)tv.tv_usec);
+  // ESP_DRAM_LOGI(TAG, "tick count: %lld", (int64_t)tv.tv_sec * 1000000L + (int64_t)tv.tv_usec);
 
   for (Stepper *stepper : stepper_timer->steppers())
   {
