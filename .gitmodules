@@ -4,3 +4,6 @@
 [submodule "components/esp_ethernet"]
 	path = components/esp_ethernet
 	url = https://github.com/atiautomacao/esp_ethernet
+[submodule "components/esp_settings"]
+	path = components/esp_settings
+	url = https://github.com/atiautomacao/esp_settings.git
