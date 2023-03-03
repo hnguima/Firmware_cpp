@@ -7,7 +7,7 @@ for PROCESS in $IDS; do
     kill $PROCESS
 done
 
-esptool.py -p /dev/ttyUSB1 -b 230400 read_flash 0x0035b000 0x00010000 filesystem_content.bin
+esptool.py -p /dev/ttyUSB1 -b 230400 read_flash 0x00310000 0x0004b000 filesystem_content.bin
 
 rmdir ./embedded_flash
 
