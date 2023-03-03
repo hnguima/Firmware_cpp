@@ -1,5 +1,6 @@
 #include "esp_filesystem.hpp"
 
+#include <sys/stat.h>
 #include <freertos/FreeRTOS.h>
 
 #include <esp_log.h>
@@ -155,12 +156,60 @@ esp_err_t FileSystem::unmount_all()
   return err;
 }
 
+esp_err_t FileSystem::open(const char *file_name, const char *mode)
+{
+  // TODO: mutex take here
+
+  if (this->file)
+  {
+    ESP_LOGE(TAG, "A file is already open, close it before reading another one");
+    return ESP_ERR_INVALID_STATE;
+  }
+
+  this->file = fopen(file_name, mode);
+
+  return ESP_OK;
+}
+
+esp_err_t FileSystem::close()
+{
+  if (this->file == NULL)
+  {
+    ESP_LOGE(TAG, "File stream not open");
+    return ESP_FAIL;
+  }
+
+  fclose(this->file);
+  this->file = NULL;
+
+  // TODO: mutex give here
+
+  return ESP_OK;
+}
+
+esp_err_t FileSystem::abort()
+{
+  return this->close();
+}
+
+size_t FileSystem::read(const char *file_name, char *output)
+{
+  return this->read(file_name, output, this->get_size(file_name));
+}
+
 size_t FileSystem::read(const char *file_name, char *output, size_t size)
 {
 
-  if (this->find(file_name) != ESP_OK)
+  if (this->file == NULL)
   {
-    return 0;
+    ESP_LOGI(TAG, "Opening file: %s (r)", file_name);
+
+    if (!this->find(file_name))
+    {
+      return 0;
+    }
+
+    this->open(file_name, "rb");
   }
 
   // Read 'size' bytes:
@@ -175,34 +224,51 @@ size_t FileSystem::read(const char *file_name, char *output, size_t size)
   return read_size;
 }
 
-esp_err_t FileSystem::find(const char *file_name)
+size_t FileSystem::write(const char *file_name, char *input)
 {
-
-  if (this->file == NULL)
-  {
-    this->file = fopen(file_name, "r");
-
-    if (this->file == NULL)
-    {
-      ESP_LOGE(TAG, "File not found: %s", file_name);
-      return ESP_ERR_NOT_FOUND;
-    }
-  }
-
-  return ESP_OK;
+  return this->write(file_name, input, strlen(input));
 }
 
-esp_err_t FileSystem::abort()
+size_t FileSystem::write(const char *file_name, char *input, size_t size)
 {
 
   if (this->file == NULL)
   {
-    ESP_LOGE(TAG, "File stream not open");
-    return ESP_FAIL;
+    ESP_LOGI(TAG, "Opening file: %s (w)", file_name);
+    this->open(file_name, "wb");
   }
 
-  fclose(this->file);
-  this->file = NULL;
+  // write 'size' bytes:
+  size_t written_size = fwrite(input, 1, size, this->file);
 
-  return ESP_OK;
+  return written_size;
+}
+
+bool FileSystem::find(const char *file_name)
+{
+  struct stat st;
+  if (stat(file_name, &st) != 0)
+  {
+    ESP_LOGE(TAG, "File not found: %s", file_name);
+    perror("stat");
+    return false;
+  }
+
+  return true;
+}
+
+int32_t FileSystem::get_size(const char *file_name)
+{
+
+  struct stat st;
+  if (stat(file_name, &st) != 0)
+  {
+    ESP_LOGE(TAG, "File not found: %s", file_name);
+    perror("stat");
+    return false;
+  }
+
+  int32_t size = st.st_size;
+
+  return size;
 }
