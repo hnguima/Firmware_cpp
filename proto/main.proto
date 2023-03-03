@@ -1,9 +1,11 @@
-syntax = "proto3";
+syntax = "proto2";
 
 import "wifi.proto";
 
+import "nanopb.proto";
 
 message MainConfig {
-  WifiConfig wifi = 1;
-  int32 teste = 2;
+  required string test = 1 [default = "testest", (nanopb).max_size = 64];
+  required WifiConfig wifi = 2;
+  optional int32 teste = 3 [default = 10];
 }

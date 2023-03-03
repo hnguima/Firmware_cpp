@@ -99,7 +99,7 @@ tabs["tools"].container.appendChild(new GeneralPanel());
 tabs["tools"].container.appendChild(new FirmwarePanel());
 tabs["tools"].container.appendChild(new ConfigPanel());
 
-import { default as root } from "./proto.js";
+import { default as root } from "./proto.pb.js";
 
 // Exemplary payload
 var payload = { wifi: { ssid: "asdfasdf", password: "testes" } };

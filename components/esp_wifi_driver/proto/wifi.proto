@@ -1,8 +1,9 @@
-syntax = "proto3";
+syntax = "proto2";
 
 import "nanopb.proto";
 
 message WifiConfig {
-  string ssid = 1 [(nanopb).max_size = 40];
-  string password = 2 [(nanopb).max_size = 40];
+  required string ssid = 1 [default = "aushdfiuhasd", (nanopb).max_size = 64];
+  required string password = 2 [default = "my_pass", (nanopb).max_size = 64];
+  required string status = 3 [default = "not working", (nanopb).max_size = 64];
 }

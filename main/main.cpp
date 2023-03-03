@@ -28,9 +28,6 @@
 
 const auto sleep_time = std::chrono::milliseconds{10000};
 
-
-
-
 extern "C" void app_main()
 
 {
@@ -43,20 +40,20 @@ extern "C" void app_main()
 
   gpio_set_level((gpio_num_t)ENABLE_3V, 0);
 
-  Ethernet *eth_driver = Ethernet::get_instance();
+  FileSystem *file_system = FileSystem::get_instance();
+  file_system->mount_all();
 
+  // Ethernet *eth_driver = Ethernet::get_instance();
 
-  // WifiDriver *wifi_driver = WifiDriver::get_instance();
+  WifiDriver *wifi_driver = WifiDriver::get_instance();
+  wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
   // wifi_driver->init_STA("centaurus", "d3sn3tw1f1");
 
   HTTPServer *http_server = HTTPServer::get_instance();
 
-  Settings<WifiConfig> config;
+  Settings<MainConfig> config("/data/main.set");
 
   FirmwareUpdate fw_update;
-
-  FileSystem *file_system = FileSystem::get_instance();
-  file_system->mount_all();
 
   // Stepper *new_stepper1 = new Stepper();
   // Stepper *new_stepper2 = new Stepper();
