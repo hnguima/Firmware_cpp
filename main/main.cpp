@@ -20,7 +20,8 @@
 
 #include "esp_settings.hpp"
 
-#include "socket_tcp.hpp"
+#include "socket_client_tcp.hpp"
+#include "socket_server_tcp.hpp"
 
 #include "main.pb.h"
 
@@ -45,10 +46,10 @@ extern "C" void app_main()
   FileSystem *file_system = FileSystem::get_instance();
   file_system->mount_all();
 
-  Ethernet *eth_driver = Ethernet::get_instance();
+  // Ethernet *eth_driver = Ethernet::get_instance();
 
-  // WifiDriver *wifi_driver = WifiDriver::get_instance();
-  // wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
+  WifiDriver *wifi_driver = WifiDriver::get_instance();
+  wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
   // wifi_driver->init_STA("centaurus", "d3sn3tw1f1");
 
   HTTPServer *http_server = HTTPServer::get_instance();
@@ -57,7 +58,10 @@ extern "C" void app_main()
 
   FirmwareUpdate fw_update;
 
-  SocketClient *sock = new SocketClient();
+  SocketClient *sock = new SocketClient("192.168.0.105", 8080);
+  SocketServer *socket_server = new SocketServer(502);
+  // SocketClient *sock2 = new SocketClient();
+  // SocketClient *sock3 = new SocketClient();
 
   // Stepper *new_stepper1 = new Stepper();
   // Stepper *new_stepper2 = new Stepper();
@@ -77,15 +81,20 @@ extern "C" void app_main()
 
   // ss << "Hello World";
   // ESP_LOGI(pcTaskGetName(nullptr), "%s", ss.str().c_str());
-  int *i = (int*)malloc(sizeof(int));
+  int *i = (int *)malloc(sizeof(int));
   *i = 0;
 
-  sock->on_connect([i](int test)
-                   { 
+  sock->on_recv([](uint8_t *buffer, size_t size)
+                { ESP_LOG_BUFFER_CHAR("recv client", buffer, size); });
 
-                    ESP_LOGI("main", "hello from inside lambda %d, %d", *i, test); 
+  socket_server->on_client_recv([socket_server](int client, uint8_t *buffer, size_t size)
+                                { 
+                                  struct sockaddr_in address;
+                                  int address_size = sizeof(address);
+                                  getpeername(client, (struct sockaddr *)&address, (socklen_t *)&address_size);
 
-                    });
+                                  ESP_LOGI("recv server", "recv from %s:%d ", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+                                  ESP_LOG_BUFFER_CHAR("recv server", buffer, size); });
 
   while (true)
   {

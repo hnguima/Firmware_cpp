@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <functional>
+#include <string>
+#include <vector>
 
 #include <string.h>
 #include <stdio.h>
@@ -11,71 +13,75 @@
 
 #include <esp_log.h>
 
-class SocketClient
+#include "lwip/sockets.h"
+
+#define MAX_SOCKETS 2
+
+#define SOCKET_RETRY_INTERVAL 5000
+
+#define SOCKET_RX_BUFFER_MAX 1024
+#define SOCKET_TX_BUFFER_MAX 1024
+
+#define RETURN_OR_CONTINUE(condition) \
+    if (condition)                    \
+    {                                 \
+        return;                       \
+    }                                 \
+    else                              \
+    {                                 \
+        continue;                     \
+    }
+
+#define RETURN_OR_BREAK(condition) \
+    if (condition)                 \
+    {                              \
+        return false;              \
+    }                              \
+    else                           \
+    {                              \
+        break;                     \
+    }
+
+class Socket
 {
 protected:
 public:
-    SocketClient();
-
-    // // /**
-    // //  * @brief adiciona o grupo de eventos a ser observado pelo socket, principalmente o evento de conexão
-    // //  *
-    // //  * @param event_group grupo de eventos a ser associado ao socket
-    // //  * @return esp_err_t
-    // //  */
-    // // esp_err_t socket_manager_init(EventGroupHandle_t *event_group);
-
-    // /**
-    //  * @brief adiciona conteudo a ser enviado pelo socket, assim que a tas estiver disponpivel o dado
-    //  * será enviado
-    //  *
-    //  * @param socket ponteiro para estrutura do socket
-    //  * @param buffer buffer a ser enviado
-    //  * @param size tamanho do dado a ser enviado
-    //  * @return esp_err_t retorna erro caso o socket não esteja aberto ou se o tamanho do dado for
-    //  *           maior que o suportado
-    //  */
-    // esp_err_t send(socket_ctx_t *socket, uint8_t *buffer, uint16_t size);
+    Socket();
 
     typedef std::function<void(void)> handler_func_t;
-    typedef std::function<void(int)> recv_handler_func_t;
+    typedef std::function<void(uint8_t *, int16_t &)> recv_handler_func_t;
 
-    esp_err_t on_connect(recv_handler_func_t func);
-    esp_err_t on_disconnect(handler_func_t func);
-    esp_err_t on_recv(handler_func_t func);
+    esp_err_t on_recv(recv_handler_func_t func);
 
-    // esp_err_t socket_task_create(socket_ctx_t *new_socket, uint8_t type);
+    bool operator==(Socket const &rhs);
 
-    // /**
-    //  * @brief deleta a task associada ao socket, fechando a conexão
-    //  *
-    //  * @param socket descritor do socket a ser fechado
-    //  * @return esp_err_t retorna o erro que causou o fechamento da conexão
-    //  */
-    // esp_err_t socket_task_delete(int socket);
 
-    recv_handler_func_t on_connect_cb;
-    handler_func_t on_disconnect_cb;
-    handler_func_t recv_cb;
+protected:
+    std::vector<Socket *> open_sockets;
 
-private:
-    // in_addr_t addr;
-    // in_port_t port;
+    recv_handler_func_t on_recv_cb;
 
-    // int cli_sock;
+    bool retry();
+    bool recv_loop();
+    void delete_task();
+    void wait_for_network();
 
-    // uint8_t buf_rx[SOCKET_RX_BUF_MAX];
-    // int16_t size_rx;
-    // uint8_t buf_tx[SOCKET_TX_BUF_MAX];
-    // int16_t size_tx;
+    char task_name[32];
+    TaskHandle_t *task_handle;
 
-    // void (*recv_cb)(uint8_t *data_rx, int16_t size_rx);
-    // void (*on_disconnect_cb)();
+    int fd;
 
-    // bool is_persistent;
-    // uint8_t retry_max;
-    // uint16_t retry_delay;
-    // uint8_t retry;
+    uint8_t buffer_rx[SOCKET_RX_BUFFER_MAX];
+    int16_t size_rx;
+    uint8_t buffer_tx[SOCKET_TX_BUFFER_MAX];
+    int16_t size_tx;
 
-    // SemaphoreHandle_t mutex;
+    bool is_persistent;
+    bool is_vital;
+
+    uint16_t retries;
+    uint16_t max_retries;
+    uint16_t retry_delay;
+
+    SemaphoreHandle_t mutex;
 };
