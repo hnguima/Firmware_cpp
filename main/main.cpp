@@ -46,10 +46,14 @@ extern "C" void app_main()
   FileSystem *file_system = FileSystem::get_instance();
   file_system->mount_all();
 
-  // Ethernet *eth_driver = Ethernet::get_instance();
+  SocketServer *socket_server = new SocketServer(502);
 
-  WifiDriver *wifi_driver = WifiDriver::get_instance();
-  wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
+  vTaskDelay(2000 / portTICK_PERIOD_MS);
+
+  Ethernet *eth_driver = Ethernet::get_instance();
+
+  // WifiDriver *wifi_driver = WifiDriver::get_instance();
+  // wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
   // wifi_driver->init_STA("centaurus", "d3sn3tw1f1");
 
   HTTPServer *http_server = HTTPServer::get_instance();
@@ -58,8 +62,7 @@ extern "C" void app_main()
 
   FirmwareUpdate fw_update;
 
-  SocketClient *sock = new SocketClient("192.168.0.105", 8080);
-  SocketServer *socket_server = new SocketServer(502);
+  SocketClient *sock = new SocketClient("192.168.2.200", 8080);
   // SocketClient *sock2 = new SocketClient();
   // SocketClient *sock3 = new SocketClient();
 
@@ -96,12 +99,12 @@ extern "C" void app_main()
                                   ESP_LOGI("recv server", "recv from %s:%d ", inet_ntoa(address.sin_addr), ntohs(address.sin_port));
                                   ESP_LOG_BUFFER_CHAR("recv server", buffer, size); });
 
-  while (true)
-  {
+  // while (true)
+  // {
 
-    ESP_LOGI("main", "local i: %d", *i);
-    (*i)++;
+  //   ESP_LOGI("main", "local i: %d", *i);
+  //   (*i)++;
 
-    std::this_thread::sleep_for(sleep_time);
-  }
+  //   std::this_thread::sleep_for(sleep_time);
+  // }
 }
