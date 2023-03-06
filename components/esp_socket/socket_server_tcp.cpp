@@ -16,9 +16,6 @@ static const char *TAG = "SocketServer";
 std::vector<SocketServer *> _server_open_sockets;
 std::vector<int> _clients;
 
-static void socket_server_event_handler(void *arg, esp_event_base_t event_base,
-                                        int32_t event_id, void *event_data);
-
 SocketServer::SocketServer(uint16_t port) : Socket(),
                                             open_sockets(_server_open_sockets),
                                             port(port),
@@ -34,13 +31,6 @@ SocketServer::SocketServer(uint16_t port) : Socket(),
 
   this->task_handle = (TaskHandle_t *)malloc(sizeof(TaskHandle_t));
   xTaskCreate(SocketServer::task, this->task_name, 4096, (void *)this, 5, this->task_handle);
-
-  esp_event_handler_instance_t instance_got_ip;
-  ESP_ERROR_CHECK_WITHOUT_ABORT(esp_event_handler_instance_register(IP_EVENT,
-                                                                    ESP_EVENT_ANY_ID,
-                                                                    &socket_server_event_handler,
-                                                                    this,
-                                                                    &instance_got_ip));
 }
 
 bool SocketServer::operator==(SocketServer const &rhs)
@@ -72,7 +62,7 @@ int SocketServer::bind_socket()
   // Vincula o IP do servidor com a PORTA a ser aberta.
   struct sockaddr_in server_addr;
   server_addr.sin_family = AF_INET;
-  server_addr.sin_addr.s_addr = ipaddr_addr(this->addr);
+  server_addr.sin_addr.s_addr = ipaddr_addr(Socket::ip);
   server_addr.sin_port = htons(this->port);
 
   return bind(this->fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -87,9 +77,9 @@ void SocketServer::task(void *param)
   socket_instance->wait_for_network();
   vTaskDelay(50 / portTICK_PERIOD_MS);
 
-  ESP_LOGI(TAG, "Socket ip: %s", socket_instance->addr);
+  ESP_LOGI(TAG, "Socket ip: %s", Socket::ip);
 
-  sprintf(socket_instance->task_name, "socket(%s:%d)", socket_instance->addr, socket_instance->port);
+  sprintf(socket_instance->task_name, "socket(%s:%d)", Socket::ip, socket_instance->port);
 
   while (true)
   {
@@ -246,23 +236,4 @@ bool SocketServer::server_loop()
   }
 
   return true;
-}
-
-static void socket_server_event_handler(void *arg, esp_event_base_t event_base,
-                                        int32_t event_id, void *event_data)
-{
-  SocketServer *socket = (SocketServer *)arg;
-
-  ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
-
-  if (event_id == IP_EVENT_STA_GOT_IP ||
-      event_id == IP_EVENT_GOT_IP6 ||
-      event_id == IP_EVENT_ETH_GOT_IP ||
-      event_id == IP_EVENT_PPP_GOT_IP)
-  {
-    sprintf(socket->addr, IPSTR, IP2STR(&event->ip_info.ip));
-    socket->addr[strlen(socket->addr)] = '\0';
-
-    ESP_LOGI(TAG, "Socket ip: %s", socket->addr);
-  }
 }

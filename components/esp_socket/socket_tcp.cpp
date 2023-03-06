@@ -11,10 +11,8 @@
 
 static const char *TAG = "Socket";
 
-bool has_network = false;
-
-static void socket_event_handler(void *arg, esp_event_base_t event_base,
-                                 int32_t event_id, void *event_data);
+bool Socket::has_network = false;
+char Socket::ip[16] = "";
 
 Socket::Socket() : on_recv_cb(NULL),
                    is_persistent(true),
@@ -46,15 +44,6 @@ Socket::Socket() : on_recv_cb(NULL),
     ESP_LOGE(TAG, "nao foi possivel criar o mutex");
     return;
   }
-
-  ESP_ERROR_CHECK_WITHOUT_ABORT(esp_event_loop_create_default());
-
-  esp_event_handler_instance_t instance_got_ip;
-  ESP_ERROR_CHECK_WITHOUT_ABORT(esp_event_handler_instance_register(IP_EVENT,
-                                                                    ESP_EVENT_ANY_ID,
-                                                                    &socket_event_handler,
-                                                                    this,
-                                                                    &instance_got_ip));
 }
 
 void Socket::delete_task()
@@ -148,11 +137,47 @@ bool Socket::retry()
   return false;
 }
 
+std::vector<esp_netif_t *> get_netif_list()
+{
+  std::vector<esp_netif_t *> netif_list;
+
+  esp_netif_t *netif_it = NULL;
+
+  do
+  {
+    netif_it = esp_netif_next(netif_it);
+    netif_list.push_back(netif_it);
+
+  } while (netif_it != NULL);
+
+  return netif_list;
+}
+
 void Socket::wait_for_network()
 {
 
-  while (has_network == false)
+  while (Socket::has_network == false)
   {
+    std::vector<esp_netif_t *> netif_list = get_netif_list();
+
+
+
+    if (netif_list.size() != 0)
+    {
+      for (esp_netif_t *netif_item : netif_list)
+      {
+        esp_netif_ip_info_t ip_info;
+        esp_netif_get_ip_info(netif_item, &ip_info);
+
+        if (ip_info.ip.addr != 0 && esp_netif_is_netif_up(netif_item))
+        {
+          Socket::has_network = true;
+          sprintf(Socket::ip, IPSTR, IP2STR(&ip_info.ip));
+          Socket::ip[strlen(Socket::ip)] = '\0';
+        }
+      }
+    }
+
     vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 }
@@ -161,24 +186,4 @@ esp_err_t Socket::on_recv(recv_handler_func_t func)
 {
   this->on_recv_cb = func;
   return ESP_OK;
-}
-
-static void socket_event_handler(void *arg, esp_event_base_t event_base,
-                                 int32_t event_id, void *event_data)
-{
-
-  if (event_id == IP_EVENT_STA_GOT_IP ||
-      event_id == IP_EVENT_GOT_IP6 ||
-      event_id == IP_EVENT_ETH_GOT_IP ||
-      event_id == IP_EVENT_PPP_GOT_IP)
-  {
-    has_network = true;
-  }
-
-  else if (event_id == IP_EVENT_STA_LOST_IP ||
-           event_id == IP_EVENT_ETH_LOST_IP ||
-           event_id == IP_EVENT_PPP_LOST_IP)
-  {
-    has_network = false;
-  }
 }

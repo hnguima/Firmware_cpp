@@ -12,6 +12,7 @@
 #include <esp_err.h>
 
 #include <esp_log.h>
+#include <esp_event.h>
 
 #include "lwip/sockets.h"
 
@@ -55,7 +56,6 @@ public:
 
     bool operator==(Socket const &rhs);
 
-
 protected:
     std::vector<Socket *> open_sockets;
 
@@ -82,6 +82,10 @@ protected:
     uint16_t retries;
     uint16_t max_retries;
     uint16_t retry_delay;
+
+    static void socket_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
+    static bool has_network;
+    static char ip[16];
 
     SemaphoreHandle_t mutex;
 };

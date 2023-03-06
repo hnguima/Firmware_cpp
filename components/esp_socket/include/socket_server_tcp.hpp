@@ -34,8 +34,6 @@ public:
 
     bool operator==(SocketServer const &rhs);
 
-    char addr[16];
-
 private:
     std::vector<SocketServer *> open_sockets;
     std::vector<int> clients;
