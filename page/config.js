@@ -50,10 +50,9 @@ const saveSettings = async () => {
     });
 
     const responseText = await response.text();
-    console.log(responseText);
 
     if(responseText == "Success") {
-      page._oldValue = page.value;
+      location.reload(); 
     }
   }
 };

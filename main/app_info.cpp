@@ -40,7 +40,7 @@ void app_info_task(void *param)
 
     settings->obj->general.up_time = curr_time - settings->obj->general.boot_time;
 
-    vTaskDelay(1000);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 
