@@ -53,12 +53,11 @@ public:
     typedef std::function<void(uint8_t *, int16_t &)> recv_handler_func_t;
 
     esp_err_t on_recv(recv_handler_func_t func);
+    bool send_bytes(int client_fd, const uint8_t *buffer, size_t size);
 
     bool operator==(Socket const &rhs);
 
 protected:
-    std::vector<Socket *> open_sockets;
-
     recv_handler_func_t on_recv_cb;
 
     bool retry();

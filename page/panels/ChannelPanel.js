@@ -18,19 +18,19 @@ export class ChannelPanel extends SwitchPanel {
     this.icon = icon;
     this.enabled = true;
 
-    new SelectField({
-      panel: this,
-      name: "type",
-      label: "Modo de operação",
-      options: [
-        {
-          text: "ModBUS RTU",
-        },
-        {
-          text: "Anygrid",
-        },
-      ],
-    });
+    // new SelectField({
+    //   panel: this,
+    //   name: "type",
+    //   label: "Modo de operação",
+    //   options: [
+    //     {
+    //       text: "ModBUS RTU",
+    //     },
+    //     {
+    //       text: "Anygrid",
+    //     },
+    //   ],
+    // });
 
     const UARTheader = document.createElement("h3");
     UARTheader.innerHTML = "Configurações do UART";
@@ -38,14 +38,14 @@ export class ChannelPanel extends SwitchPanel {
 
     new IntegerField({
       panel: this,
-      name: "baudrate",
+      name: "rtuBaudRate",
       label: "Baud Rate",
-      max: 65535,
+      max: 921600,
     });
 
     new SelectField({
       panel: this,
-      name: "parity",
+      name: "rtuParity",
       label: "Paridade",
       options: [
         {
@@ -65,7 +65,7 @@ export class ChannelPanel extends SwitchPanel {
 
     new SelectField({
       panel: this,
-      name: "stop-bits",
+      name: "rtuStopBits",
       label: "Quantidade de Stop Bits",
       options: [
         {
@@ -85,7 +85,7 @@ export class ChannelPanel extends SwitchPanel {
 
     new SelectField({
       panel: this,
-      name: "data-bits",
+      name: "rtuDataBits",
       label: "Quantidade de bits de dado (Data Bits)",
       options: [
         {
@@ -103,13 +103,22 @@ export class ChannelPanel extends SwitchPanel {
       ],
     });
 
+    new IntegerField({
+      panel: this,
+      name: "rtuTimeout",
+      placeholder: "ms",
+      label: "Timeout (ms)",
+      min: -1,
+      max: 60000,
+    });
+
     const TCPheader = document.createElement("h3");
     TCPheader.innerHTML = "Configurações do TCP";
     this.wrapper.appendChild(TCPheader);
 
     new IntegerField({
       panel: this,
-      name: "tcp-port",
+      name: "tcpPort",
       placeholder: "port",
       label: "Porta TCP",
       max: 65535,
@@ -117,10 +126,11 @@ export class ChannelPanel extends SwitchPanel {
 
     new IntegerField({
       panel: this,
-      name: "timeout",
+      name: "tcpTimeout",
       placeholder: "ms",
       label: "Timeout (ms)",
-      max: 65535,
+      min: -1,
+      max: 60000,
     });
   }
 }

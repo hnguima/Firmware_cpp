@@ -1,7 +1,9 @@
-idf_component_register( SRCS 
+idf_component_register( SRCS
                             "main.cpp"
-                           
-                        INCLUDE_DIRS 
+                            "mdb_relay_io.c"
+                            "http_handlers.cpp"
+                            "app_info.cpp"
+
+                        INCLUDE_DIRS
                             "."
 )
-

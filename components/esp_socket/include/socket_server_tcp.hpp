@@ -35,7 +35,6 @@ public:
     bool operator==(SocketServer const &rhs);
 
 private:
-    std::vector<SocketServer *> open_sockets;
     std::vector<int> clients;
 
     uint16_t port;
@@ -46,8 +45,12 @@ private:
 
     fd_set all_fds;
 
+    static std::vector<SocketServer *> open_sockets;
+
     int bind_socket();
+    bool server_loop();
 
     static void task(void *param);
-    bool server_loop();
+    void delete_task();
+
 };

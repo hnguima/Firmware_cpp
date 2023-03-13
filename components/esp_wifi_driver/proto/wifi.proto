@@ -3,7 +3,7 @@ syntax = "proto2";
 import "nanopb.proto";
 
 message WifiConfig {
-  required string ssid = 1 [default = "aushdfiuhasd", (nanopb).max_size = 64];
-  required string password = 2 [default = "my_pass", (nanopb).max_size = 64];
-  required string status = 3 [default = "not working", (nanopb).max_size = 64];
+  required bool enabled = 1 [default = false];
+  required string ssid = 2 [default = "CLARO_2GA8652A", (nanopb).max_size = 64];
+  required string password = 3 [default = "38A8652A", (nanopb).max_size = 64];
 }

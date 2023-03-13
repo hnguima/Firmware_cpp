@@ -22,21 +22,6 @@ Socket::Socket() : on_recv_cb(NULL),
                    retry_delay(SOCKET_RETRY_INTERVAL)
 {
 
-  if (!(this->open_sockets.size() < MAX_SOCKETS))
-  {
-    ESP_LOGE(TAG, "Numero de servers abertos ja é o maximo permitido: %d", MAX_SOCKETS);
-    return;
-  }
-
-  for (Socket *socket : this->open_sockets)
-  {
-    if (this == socket)
-    {
-      ESP_LOGE(TAG, "Já existe um servidor aberto com este IP e porta");
-      return;
-    }
-  }
-
   this->mutex = xSemaphoreCreateMutex();
 
   if (this->mutex == NULL)
@@ -58,9 +43,6 @@ void Socket::delete_task()
   // Deleting the current task
   vTaskDelete(*this->task_handle);
 
-  this->open_sockets.erase(
-      std::remove(this->open_sockets.begin(), this->open_sockets.end(), this),
-      this->open_sockets.end());
 }
 
 bool Socket::recv_loop()
@@ -160,8 +142,6 @@ void Socket::wait_for_network()
   {
     std::vector<esp_netif_t *> netif_list = get_netif_list();
 
-
-
     if (netif_list.size() != 0)
     {
       for (esp_netif_t *netif_item : netif_list)
@@ -186,4 +166,52 @@ esp_err_t Socket::on_recv(recv_handler_func_t func)
 {
   this->on_recv_cb = func;
   return ESP_OK;
+}
+
+bool Socket::send_bytes(int client_fd, const uint8_t *buffer, size_t size)
+{
+
+  esp_err_t err = ESP_OK;
+
+  if (xSemaphoreTake(this->mutex, (TickType_t)100) != pdTRUE)
+  {
+    ESP_LOGE(TAG, "mutex socket nao liberado");
+    return ESP_FAIL;
+  }
+
+  if (client_fd == 0)
+  {
+    ESP_LOGE(TAG, "client fd is 0");
+
+    xSemaphoreGive(this->mutex);
+    return ESP_ERR_NOT_FOUND;
+  }
+  // else if (this->size_tx != 0)
+  // {
+  //   ESP_LOGE(TAG, "client fd is 0");
+  //   return ESP_ERR_INVALID_STATE;
+  // }
+  else if (size > SOCKET_TX_BUFFER_MAX)
+  {
+    ESP_LOGE(TAG, "send data greater than %d", SOCKET_TX_BUFFER_MAX);
+
+    xSemaphoreGive(this->mutex);
+    return ESP_ERR_INVALID_ARG;
+  }
+
+  memcpy(this->buffer_tx, buffer, size);
+  this->size_tx = size;
+
+  err = send(client_fd, this->buffer_tx, this->size_tx, 0);
+
+  if (err < 0)
+  {
+    ESP_LOGE(TAG, "error (%d) on send", errno);
+    perror("send");
+  }
+
+  this->size_tx = 0;
+
+  xSemaphoreGive(this->mutex);
+  return err;
 }

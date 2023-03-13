@@ -13,16 +13,30 @@
 
 static const char *TAG = "SocketServer";
 
-std::vector<SocketServer *> _server_open_sockets;
+std::vector<SocketServer *> SocketServer::open_sockets;
 std::vector<int> _clients;
 
 SocketServer::SocketServer(uint16_t port) : Socket(),
-                                            open_sockets(_server_open_sockets),
                                             port(port),
                                             on_client_connect_cb(NULL),
                                             on_client_disconnect_cb(NULL),
                                             on_client_recv_cb(NULL)
 {
+
+  if (!(this->open_sockets.size() < MAX_SOCKETS))
+  {
+    ESP_LOGE(TAG, "Numero de servers abertos ja é o maximo permitido: %d", MAX_SOCKETS);
+    return;
+  }
+
+  for (SocketServer *socket : this->open_sockets)
+  {
+    if (this == socket)
+    {
+      ESP_LOGE(TAG, "Já existe um servidor aberto com este IP e porta");
+      return;
+    }
+  }
 
   this->open_sockets.push_back(this);
   ESP_LOGI(TAG, "SocketServers abertos: %d", this->open_sockets.size());
@@ -31,6 +45,15 @@ SocketServer::SocketServer(uint16_t port) : Socket(),
 
   this->task_handle = (TaskHandle_t *)malloc(sizeof(TaskHandle_t));
   xTaskCreate(SocketServer::task, this->task_name, 4096, (void *)this, 5, this->task_handle);
+}
+
+void SocketServer::delete_task()
+{
+  Socket::delete_task();
+
+  this->open_sockets.erase(
+      std::remove(this->open_sockets.begin(), this->open_sockets.end(), this),
+      this->open_sockets.end());
 }
 
 bool SocketServer::operator==(SocketServer const &rhs)
@@ -104,7 +127,7 @@ void SocketServer::task(void *param)
       RETURN_OR_CONTINUE(socket_instance->retry() == 0);
     }
 
-    ESP_LOGI(socket_instance->task_name, "socket client binded");
+    ESP_LOGI(socket_instance->task_name, "socket server binded");
 
     //  socket->wd_mdb_counter = 0; //Zera o contador do watchdog da conexão Modbus TCP
 
@@ -136,6 +159,10 @@ bool SocketServer::server_loop()
   struct sockaddr_in address;
   int address_size = sizeof(address);
 
+  int max_fd;
+  int activity;
+  int new_client;
+
   while (true)
   {
     // clear the socket set
@@ -143,7 +170,7 @@ bool SocketServer::server_loop()
 
     // add master socket to set
     FD_SET(this->fd, &this->all_fds);
-    int max_fd = this->fd;
+    max_fd = this->fd;
 
     // add child sockets to set
     for (int socket_fd : this->clients)
@@ -159,7 +186,7 @@ bool SocketServer::server_loop()
 
     // wait for an activity on one of the sockets , timeout is NULL ,
     // so wait indefinitely
-    int activity = select(max_fd + 1, &this->all_fds, NULL, NULL, NULL);
+    activity = select(max_fd + 1, &this->all_fds, NULL, NULL, NULL);
 
     if ((activity < 0) && (errno != EINTR))
     {
@@ -171,7 +198,7 @@ bool SocketServer::server_loop()
     // then its an incoming connection
     if (FD_ISSET(this->fd, &this->all_fds))
     {
-      int new_client = accept(this->fd, (struct sockaddr *)&address, (socklen_t *)&address_size);
+      new_client = accept(this->fd, (struct sockaddr *)&address, (socklen_t *)&address_size);
       if (new_client < 0)
       {
         ESP_LOGE(this->task_name, "accept error (%d)", errno);
@@ -219,7 +246,7 @@ bool SocketServer::server_loop()
             this->on_client_disconnect_cb(socket_fd);
           }
 
-          RETURN_OR_BREAK(this->server_loop() == 0)
+          break;
         }
 
         this->retries = 0;
