@@ -52,7 +52,7 @@ const saveSettings = async () => {
     const responseText = await response.text();
 
     if(responseText == "Success") {
-      location.reload(); 
+      location.reload();
     }
   }
 };
