@@ -264,4 +264,3 @@ bool SocketServer::server_loop()
 
   return true;
 }
-

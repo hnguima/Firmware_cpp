@@ -52,5 +52,5 @@ private:
 
     static void task(void *param);
     void delete_task();
-    
+
 };

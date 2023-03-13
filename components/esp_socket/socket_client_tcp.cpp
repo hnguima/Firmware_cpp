@@ -146,4 +146,3 @@ void SocketClient::task(void *param)
     }
   }
 }
-

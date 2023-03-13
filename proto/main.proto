@@ -46,6 +46,6 @@ message MainConfig {
 
   required WifiConfig wifi = 6;
 
-  required ModbusGatewayConfig channel_1 = 7; 
-  required ModbusGatewayConfig channel_2 = 8; 
+  required ModbusGatewayConfig channel_1 = 7;
+  required ModbusGatewayConfig channel_2 = 8;
 }
