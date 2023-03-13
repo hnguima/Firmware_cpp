@@ -36,7 +36,7 @@ public:
     bool operator==(SocketClient const &rhs);
 
 private:
-    std::vector<SocketClient *> open_sockets;
+    static std::vector<SocketClient *> open_sockets;
 
     std::string addr;
     uint16_t port;
@@ -48,4 +48,5 @@ private:
     bool retry();
 
     static void task(void *param);
+    void delete_task();
 };

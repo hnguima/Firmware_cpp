@@ -10,12 +10,19 @@
 #include <lwip/err.h>
 #include <lwip/ip4_addr.h>
 
+#include <lwip/dns.h>
+#include <lwip/inet.h>
+#include <esp_sntp.h>
+
 static const char *TAG = "WifiDriver";
 
 WifiDriver *WifiDriver::_singleton = nullptr;
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data);
+
+static void wifi_dns_configure(esp_netif_t *netif);
+static void wifi_sntp_init(void);
 
 WifiDriver::WifiDriver()
 {
@@ -205,5 +212,37 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
   {
     ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
     ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+
+    wifi_dns_configure(event->esp_netif);
+
+    if (sntp_restart() == false)
+    {
+      wifi_sntp_init();
+    }
   }
+}
+
+static void wifi_dns_configure(esp_netif_t *netif)
+{
+  // Set DNS servers for internet connection
+  esp_netif_dns_info_t dns_info;
+  dns_info.ip.type = IPADDR_TYPE_V4;
+
+  IP_ADDR4(&dns_info.ip, 8, 8, 8, 8);
+  esp_netif_set_dns_info(netif, ESP_NETIF_DNS_MAIN, &dns_info);
+  IP_ADDR4(&dns_info.ip, 1, 1, 1, 1);
+  esp_netif_set_dns_info(netif, ESP_NETIF_DNS_BACKUP, &dns_info);
+}
+
+static void wifi_sntp_init(void)
+{
+  setenv("TZ", "BRST+3BRDT+2,M10.3.0,M2.3.0", 1);
+  tzset();
+
+  // yield
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+  sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  sntp_setservername(0, "pool.ntp.org");
+  sntp_init();
 }

@@ -11,16 +11,29 @@
 
 static const char *TAG = "SocketClient";
 
-std::vector<SocketClient *> _client_open_sockets;
-
+std::vector<SocketClient *> SocketClient::open_sockets;
 
 SocketClient::SocketClient(std::string addr, uint16_t port) : Socket(),
-                                                              open_sockets(_client_open_sockets),
                                                               addr(addr),
                                                               port(port),
                                                               on_connect_cb(NULL),
                                                               on_disconnect_cb(NULL)
 {
+
+  if (!(this->open_sockets.size() < MAX_SOCKETS))
+  {
+    ESP_LOGE(TAG, "Numero de servers abertos ja é o maximo permitido: %d", MAX_SOCKETS);
+    return;
+  }
+
+  for (SocketClient *socket : this->open_sockets)
+  {
+    if (this == socket)
+    {
+      ESP_LOGE(TAG, "Já existe um servidor aberto com este IP e porta");
+      return;
+    }
+  }
 
   this->open_sockets.push_back(this);
   ESP_LOGI(TAG, "SocketClients abertos: %d", this->open_sockets.size());
@@ -30,6 +43,15 @@ SocketClient::SocketClient(std::string addr, uint16_t port) : Socket(),
 
   this->task_handle = (TaskHandle_t *)malloc(sizeof(TaskHandle_t));
   xTaskCreate(SocketClient::task, this->task_name, 4096, (void *)this, 5, this->task_handle);
+}
+
+void SocketClient::delete_task()
+{
+  Socket::delete_task();
+
+  this->open_sockets.erase(
+      std::remove(this->open_sockets.begin(), this->open_sockets.end(), this),
+      this->open_sockets.end());
 }
 
 bool SocketClient::operator==(SocketClient const &rhs)
