@@ -109,7 +109,7 @@ GenericTest test_serial_rs485_loopback(
           TEST_ASSERT(false);
         }
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        
+
         printf("Waiting (%ds)...\n", i);
       }
 
