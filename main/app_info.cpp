@@ -20,12 +20,14 @@ void app_info_task(void *param)
   settings->obj->general.resets++;
   settings->save();
 
+  bool is_initialized = false;
+
   while (true)
   {
 
     time_t curr_time = time(NULL);
 
-    if (sntp_get_sync_status() == SNTP_SYNC_STATUS_COMPLETED)
+    if (is_initialized == false && sntp_get_sync_status() == SNTP_SYNC_STATUS_COMPLETED)
     {
 
       if (settings->obj->general.install_time == 0)
@@ -36,6 +38,8 @@ void app_info_task(void *param)
       }
 
       settings->obj->general.boot_time = curr_time;
+
+      is_initialized = true;
     }
 
     settings->obj->general.up_time = curr_time - settings->obj->general.boot_time;

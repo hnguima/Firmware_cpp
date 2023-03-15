@@ -77,6 +77,21 @@ Serial::Serial(int port, uart_config_t config, uart_mode_t mode) : port(port),
   this->init();
 }
 
+Serial::~Serial()
+{
+  ESP_LOGW(TAG, "desctructor called");
+
+  uart_driver_delete(this->port);
+
+  for (size_t i = 0; i < serial_list.size(); i++)
+  {
+    if (this->port == serial_list.at(i)->port)
+    {
+      serial_list.erase(serial_list.begin() + i);
+    }
+  }
+}
+
 void Serial::init()
 {
 

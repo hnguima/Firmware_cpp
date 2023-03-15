@@ -32,6 +32,8 @@ public:
   Serial(int port, uart_config_t config);
   Serial(int port, uart_config_t config, uart_mode_t mode);
 
+  ~Serial();
+
   esp_err_t set_pins(int rx_pin, int tx_pin);
   esp_err_t set_pins(int rx_pin, int tx_pin, int rts_pin, int cts_pin);
 
