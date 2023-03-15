@@ -21,7 +21,7 @@ esp_err_t mdb_relay_io_init()
     return err;
   }
 
-  err = gpio_set_level((gpio_num_t)ENABLE_3V, 0);
+  err = gpio_set_level((gpio_num_t)GPIO_OUTPUT_ENABLE_3V_PIN, 0);
   if (err != ESP_OK)
   {
     ESP_LOGE(TAG, "error setting io level: %s", esp_err_to_name(err));

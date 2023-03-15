@@ -27,12 +27,14 @@
 
 #include "modbus_gateway.hpp"
 #include "mdb_relay_io.h"
+#include "test.hpp"
 
 #include "main.pb.h"
 
-
 extern "C" void app_main()
 {
+  test_module_init();
+
   mdb_relay_io_init();
 
   FileSystem *file_system = FileSystem::get_instance();

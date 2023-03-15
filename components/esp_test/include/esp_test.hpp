@@ -1,46 +1,34 @@
 #pragma once
 
 #include <string>
+#include <functional>
 
 #include <esp_err.h>
-#include <driver/uart.h>
 
-class GenericTest
-{
-}
-
-class HardwareTest : public GenericTest
-{
-}
-
-class IntegrationTest : public GenericTest
-{
-}
-
-class UnitTest : public GenericTest
-{
-}
-
+class GenericTest;
 class TestManager
 {
 
 public:
-  typedef std::function<void(void)> handler_func_t;
-
   TestManager();
-  TestManager(handler_func_t setup);
-  TestManager(handler_func_t setup, handler_func_t finish);
+  TestManager(bool (*setup)(void));
+  TestManager(bool (*setup)(void), bool (*cleanup)(void));
 
-  void set_setup_func(handler_func_t setup);
-  void set_finish_func(handler_func_t finish);
+  void set_setup_func(bool (*setup)(void));
+  void set_cleanup_func(bool (*cleanup)(void));
 
   void start();
-  void run_tests();
-  void finish();
+  int run_all_tests();
+  int run_test_by_index(int index);
+
+  void print_test_menu_pt();
+  int wait_for_input();
+
+  int run_menu();
 
 private:
-  handler_func_t setup;
-  handler_func_t finish;
+  bool (*setup)(void);
+  bool (*cleanup)(void);
 
   std::vector<GenericTest *> tests;
-}
+};
