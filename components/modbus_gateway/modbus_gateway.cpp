@@ -1,5 +1,4 @@
 #include "modbus_gateway.hpp"
-
 #include "modbus_converter.hpp"
 
 static const char *TAG = "ModbusGateway";
@@ -9,6 +8,7 @@ std::vector<ModbusGateway *> ModbusGateway::gateways;
 ModbusGateway::ModbusGateway() : server(nullptr),
                                  tcp_port(0),
                                  tcp_timeout(portMAX_DELAY),
+                                 tcp_retries(0),
                                  tcp_config_ok(false),
                                  serial(nullptr),
                                  rtu_uart_port(0),
@@ -16,6 +16,7 @@ ModbusGateway::ModbusGateway() : server(nullptr),
                                  rtu_parity(SERIAL_DEFAULT_PARITY),
                                  rtu_stop_bits(SERIAL_DEFAULT_STOP_BITS),
                                  rtu_data_bits(SERIAL_DEFAULT_DATA_SIZE),
+                                 rtu_retries(0),
                                  rtu_timeout(portMAX_DELAY),
                                  rtu_config_ok(false)
 {
@@ -30,6 +31,26 @@ ModbusGateway::ModbusGateway() : server(nullptr),
   //   {
   //   }
   // }
+  const esp_timer_create_args_t tcp_watchdog_args = {
+      .callback = ModbusGateway::tcp_watchdog_handler,
+      .arg = this,
+      .dispatch_method = ESP_TIMER_TASK,
+      .name = "tcp_watchdog",
+      .skip_unhandled_events = true,
+  };
+  esp_timer_create(&tcp_watchdog_args,
+                   &this->tcp_watchdog);
+
+  const esp_timer_create_args_t rtu_watchdog_args = {
+      .callback = ModbusGateway::rtu_watchdog_handler,
+      .arg = this,
+      .dispatch_method = ESP_TIMER_TASK,
+      .name = "rtu_watchdog",
+      .skip_unhandled_events = true,
+  };
+  esp_timer_create(&rtu_watchdog_args,
+                   &this->rtu_watchdog);
+
   sprintf(this->task_name, "mdb_gw(%d)", ModbusGateway::gateways.size());
   xTaskCreate(ModbusGateway::task, this->task_name, 4096, (void *)this, 5, NULL);
 }
@@ -123,51 +144,76 @@ void ModbusGateway::wait_for_config()
   ModbusGateway::gateways.push_back(this);
 }
 
+void ModbusGateway::tcp_watchdog_handler(void *param)
+{
+
+  ModbusGateway *gateway = (ModbusGateway *)param;
+
+  ESP_LOGW(gateway->task_name, "WTD called on tcp, didnt receive tcp request for the last %d tries", gateway->tcp_retries++);
+
+  if (gateway->tcp_retries > MODBUS_GATEWAY_MAX_TCP_RETRIES)
+  {
+    esp_restart();
+  }
+}
+
+void ModbusGateway::rtu_watchdog_handler(void *param)
+{
+  ModbusGateway *gateway = (ModbusGateway *)param;
+
+  ESP_LOGW(gateway->task_name, "WTD called on rtu, didnt receive rtu response for the last %d tries", gateway->rtu_retries++);
+
+  if (gateway->tcp_retries > MODBUS_GATEWAY_MAX_RTU_RETRIES)
+  {
+    esp_restart();
+  }
+
+  gateway->serial->send_bytes(gateway->rtu_data, gateway->rtu_size);
+}
+
 void ModbusGateway::task(void *param)
 {
-  ModbusGateway *modbus_gateway = (ModbusGateway *)param;
+  ModbusGateway *gateway = (ModbusGateway *)param;
 
-  modbus_gateway->wait_for_config();
+  gateway->wait_for_config();
 
-  ModbusConverter *modbus_converter = new ModbusConverter();
-  int *client = new int;
+  gateway->modbus_converter = new ModbusConverter();
 
-  uint8_t tcp_data[256] = {0};
-  uint16_t *tcp_size = new uint16_t;
+  esp_timer_start_periodic(gateway->tcp_watchdog, gateway->tcp_timeout * 1000 * 1000);
 
-  modbus_gateway->serial->on_recv(
-      [modbus_converter, modbus_gateway, client, tcp_data, tcp_size](uint8_t *data, uint32_t size)
+  gateway->server->on_client_recv(
+      [gateway](int socket_client, uint8_t *data, size_t size)
       {
-        // ESP_LOG_BUFFER_HEXDUMP("rtu recv", data, size, ESP_LOG_INFO);
+        gateway->client = socket_client;
+        esp_timer_stop(gateway->tcp_watchdog);
+        esp_timer_start_periodic(gateway->tcp_watchdog, gateway->tcp_timeout * 1000 * 1000);
 
-        modbus_converter->set_rtu_packet(data, size);
+        gateway->modbus_converter->set_tcp_packet(data, size);
 
-        modbus_converter->get_tcp_packet((uint8_t *)tcp_data, tcp_size);
-
-        // ESP_LOG_BUFFER_HEXDUMP("rtu sending", tcp_data, tcp_size, ESP_LOG_INFO);
-
-        modbus_gateway->server->send_bytes(*client, (uint8_t *)tcp_data, *tcp_size);
-
-        *client = 0;
-      });
-
-  uint8_t rtu_data[256] = {0};
-  uint16_t *rtu_size = new uint16_t;
-
-  modbus_gateway->server->on_client_recv(
-      [modbus_converter, modbus_gateway, client, rtu_data, rtu_size](int socket_client, uint8_t *data, size_t size)
-      {
-        // ESP_LOG_BUFFER_HEXDUMP("tcp recv", data, size, ESP_LOG_INFO);
-
-        modbus_converter->set_tcp_packet(data, size);
-
-        modbus_converter->get_rtu_packet((uint8_t *)rtu_data, rtu_size);
+        gateway->modbus_converter->get_rtu_packet((uint8_t *)gateway->rtu_data, &gateway->rtu_size);
 
         // ESP_LOG_BUFFER_HEXDUMP("tcp sending", rtu_data, rtu_size, ESP_LOG_INFO);
 
-        modbus_gateway->serial->send_bytes((uint8_t *)rtu_data, *rtu_size);
+        gateway->serial->send_bytes(gateway->rtu_data, gateway->rtu_size);
 
-        *client = socket_client;
+        esp_timer_start_periodic(gateway->rtu_watchdog, gateway->rtu_timeout * 1000);
+      });
+
+  gateway->serial->on_recv(
+      [gateway](uint8_t *data, uint32_t size)
+      {
+        esp_timer_stop(gateway->rtu_watchdog);
+        // ESP_LOG_BUFFER_HEXDUMP("rtu recv", data, size, ESP_LOG_INFO);
+
+        gateway->modbus_converter->set_rtu_packet(data, size);
+
+        gateway->modbus_converter->get_tcp_packet((uint8_t *)gateway->tcp_data, &gateway->tcp_size);
+
+        // ESP_LOG_BUFFER_HEXDUMP("rtu sending", tcp_data, tcp_size, ESP_LOG_INFO);
+
+        gateway->server->send_bytes(gateway->client, (uint8_t *)gateway->tcp_data, gateway->tcp_size);
+
+        // gateway->client = 0;
       });
 
   while (true)

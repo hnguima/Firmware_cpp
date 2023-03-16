@@ -16,6 +16,7 @@
 #include "esp_ethernet.hpp"
 #include "firmware_update.hpp"
 #include "http_server.hpp"
+#include "ws_log.hpp"
 
 #include "esp_settings.hpp"
 #include "http_handlers.hpp"
@@ -50,8 +51,16 @@ extern "C" void app_main()
                         main_settings->obj->wifi.password);
   // wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
 
-  HTTPServer *http_server = HTTPServer::get_instance();
+  HTTPServer::init();
+  HTTPServer *server = HTTPServer::get_instance();
+  server->add_user(main_settings->obj->login.username,
+                   main_settings->obj->login.password);
+
   init_settings_http_handler(main_settings);
+
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+
+  WebSocketLog::init();
 
   FirmwareUpdate fw_update;
 
@@ -63,8 +72,10 @@ extern "C" void app_main()
 
     mdb_gw_1->config_rtu(UART_NUM_1, temp->rtu_baud_rate, (uart_parity_t)temp->rtu_parity,
                          (uart_stop_bits_t)temp->rtu_stop_bits, (uart_word_length_t)temp->rtu_data_bits);
+    mdb_gw_1->set_rtu_timeout(temp->rtu_timeout);
     mdb_gw_1->set_rtu_pins(2, 4);
 
+    mdb_gw_1->set_tcp_timeout(temp->tcp_timeout);
     mdb_gw_1->config_tcp(temp->tcp_port);
   }
 
@@ -75,8 +86,10 @@ extern "C" void app_main()
     ModbusGateway *mdb_gw_2 = new ModbusGateway();
     mdb_gw_2->config_rtu(UART_NUM_2, temp->rtu_baud_rate, (uart_parity_t)temp->rtu_parity,
                          (uart_stop_bits_t)temp->rtu_stop_bits, (uart_word_length_t)temp->rtu_data_bits);
-
-    mdb_gw_2->config_tcp(temp->tcp_port);
+    mdb_gw_2->set_rtu_timeout(temp->rtu_timeout);
+    
+    mdb_gw_2->set_tcp_timeout(temp->tcp_timeout);
+    mdb_gw_2->config_tcp(temp->tcp_port);    
   }
 
   while (true)

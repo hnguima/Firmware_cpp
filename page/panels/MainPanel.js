@@ -8,10 +8,8 @@ import {
 } from "Field";
 import { addTooltip } from "Tooltip";
 
-import icon from "Images/person.svg";
+import info from "Images/info.svg";
 import gear from "Images/gear.svg";
-import download from "Images/download.svg";
-import factory from "Images/factory.svg";
 
 export class MainPanel extends Panel {
   constructor() {
@@ -24,56 +22,32 @@ export class MainPanel extends Panel {
     this.tab = "main";
 
     this.title = "Main panel";
-    this.icon = icon;
+    this.icon = info;
     this.enabled = true;
 
-    const textfield = new TextField({
-      panel: this,
-      name: "texttest",
-      label: "text test",
-      placeholder: "aaaaaaaaaaasdf",
-    });
+    const style = document.createElement("style");
+    style.innerHTML = `
+p {
+  font-family: "Poppins";
+  font-size: 14px;
+}
 
-    addTooltip({
-      element: textfield,
-      msg: "hello this is a tooltip",
-      img: gear,
-    });
+p,
+img {
+    display: inline-block;
+    vertical-align: middle;
+}
 
-    const switchField = new SwitchField({
-      panel: this,
-      name: "switch",
-      label: "switch test",
-    });
+img {
+    width: 25px;
+    height: 25px;
+    margin-inline: 5px;
+}`;
+    this.wrapper.appendChild(style);
 
-    const passwordField = new PasswordField({
-      panel: this,
-      name: "password",
-    });
-
-    const fileField = new FileField({
-      panel: this,
-      label: "File field",
-      img: download,
-      message:
-        "Escolha um arquivo de firmware para fazer o upload ou solte-o aqui",
-      formats: [".bin", ".hex"],
-      buttonMsg: "Atualizar",
-      callback: () => {
-        console.log(fileField);
-      },
-    });
-
-    const buttonField = new ButtonField({
-      panel: this,
-      label: "Button field",
-      img: factory,
-      color: "gold",
-      callback: () => {
-        console.log(this.value);
-        alert("hello from button");
-      },
-    });
+    const mainText = document.createElement("p");
+    mainText.innerHTML = `Bem vindo a interface de configuração do Relay Modbus ATI! Clique no icone <img src='${gear}'/> para configurar o dispositivo`;
+    this.wrapper.appendChild(mainText);
   }
 }
 

@@ -127,8 +127,8 @@ export class ChannelPanel extends SwitchPanel {
     new IntegerField({
       panel: this,
       name: "tcpTimeout",
-      placeholder: "ms",
-      label: "Timeout (ms)",
+      placeholder: "s",
+      label: "Timeout (s)",
       min: -1,
       max: 60000,
     });

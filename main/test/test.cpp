@@ -38,11 +38,11 @@ void test_module_init()
           return false;
         }
 
-        // if (gpio_get_level(GPIO_INPUT_TEST_PIN) == 0)
-        // {
-        //   ESP_LOGI(TAG, "Test pin not active. Not running tests");
-        //   return false;
-        // }
+        if (gpio_get_level(GPIO_INPUT_TEST_PIN) == 0)
+        {
+          ESP_LOGI(TAG, "Test pin not active. Not running tests");
+          return false;
+        }
 
         ESP_LOGI(TAG, "Setup done, initializing tests");
         return true;

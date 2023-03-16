@@ -9,15 +9,12 @@ import info from "Images/info.svg";
 import web from "Images/web.svg";
 import dial from "Images/dial.svg";
 
-import config from "./config.json";
-import { MainPanel, ChannelPanel } from "./panels";
-
-var protobuf = require("protobufjs/minimal");
+import { MainPanel } from "./panels";
 
 addStyleSheet(document.body, colors);
 addStyleSheet(document.body, fonts);
 
-document.body.classList.add("dark-mode");
+document.body.classList.add("light-mode");
 
 // const header = new Header({ container: document.body });
 const page = new Page({
