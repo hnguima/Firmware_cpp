@@ -33,7 +33,7 @@ export class ChannelPanel extends SwitchPanel {
     // });
 
     const UARTheader = document.createElement("h3");
-    UARTheader.innerHTML = "Configurações do UART";
+    UARTheader.innerHTML = "Configurações do SERIAL";
     this.wrapper.appendChild(UARTheader);
 
     new IntegerField({

@@ -1,11 +1,8 @@
 import { Panel } from "Panel";
 import {
-  TextField,
-  SwitchField,
-  PasswordField,
-  FileField,
-  ButtonField,
+  TimeCountField,
 } from "Field";
+
 import { addTooltip } from "Tooltip";
 
 import info from "Images/info.svg";
@@ -18,10 +15,9 @@ export class MainPanel extends Panel {
       checked: true,
     });
 
-    this.name = "main";
-    this.tab = "main";
+    this.name = "general";
 
-    this.title = "Main panel";
+    this.title = "Modbus Relay ATI";
     this.icon = info;
     this.enabled = true;
 
@@ -48,6 +44,14 @@ img {
     const mainText = document.createElement("p");
     mainText.innerHTML = `Bem vindo a interface de configuração do Relay Modbus ATI! Clique no icone <img src='${gear}'/> para configurar o dispositivo`;
     this.wrapper.appendChild(mainText);
+
+    new TimeCountField({
+      inline: true,
+      readonly: true,
+      panel: this,
+      name: "upTime",
+      label: "Tempo ligado",
+    });
   }
 }
 

@@ -57,6 +57,9 @@ esp_err_t put_settings_uri_handler(httpd_req_t *req)
   const char resp[] = "Success";
   httpd_resp_send(req, resp, HTTPD_RESP_USE_STRLEN);
 
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  esp_restart();
+
   return err;
 }
 

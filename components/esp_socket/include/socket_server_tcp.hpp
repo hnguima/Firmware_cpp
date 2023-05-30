@@ -34,6 +34,8 @@ public:
 
     bool operator==(SocketServer const &rhs);
 
+    uint16_t get_port() const { return this->port; };
+
 private:
     std::vector<int> clients;
 
@@ -52,5 +54,4 @@ private:
 
     static void task(void *param);
     void delete_task();
-
 };

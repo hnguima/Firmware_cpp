@@ -35,7 +35,7 @@ void WebSocketLog::init()
 
   _singleton->server->register_uri(&ws_uri);
 
-  esp_log_set_vprintf(WebSocketLog::vprintf);
+  esp_log_set_vprintf(WebSocketLog::ws_vprintf);
 
   // return 0;
 }
@@ -80,7 +80,7 @@ void WebSocketLog::send_async(uint8_t *buffer, size_t buffer_length)
   httpd_ws_frame_t ws_packet = {};
   ws_packet.type = HTTPD_WS_TYPE_TEXT;
 
-  ws_packet.payload =  buffer;
+  ws_packet.payload = buffer;
   ws_packet.len = buffer_length;
 
   // printf("clients: %d\n", _singleton->clients.size());
@@ -106,8 +106,14 @@ void WebSocketLog::send_async(uint8_t *buffer, size_t buffer_length)
   // return err;
 }
 
-int WebSocketLog::vprintf(const char *str, va_list l)
+int WebSocketLog::ws_vprintf(const char *str, va_list l)
 {
+
+  if (_singleton == nullptr || _singleton->clients.size() == 0)
+  {
+    return vprintf(str, l);
+  }
+
   size_t buffer_length = 0;
   char task_name[16] = {0};
   memcpy(task_name, pcTaskGetName(xTaskGetCurrentTaskHandle()), 16);

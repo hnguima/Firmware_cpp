@@ -1,3 +1,4 @@
+
 import { Page } from "Page";
 import { addStyleSheet } from "Base/utils";
 import { addTooltip } from "Tooltip";
@@ -23,6 +24,7 @@ import info from "Images/info.svg";
 import web from "Images/web.svg";
 import channel from "Images/channel.svg";
 import tools from "Images/tools.svg";
+import icon from "Images/favicon.svg";
 
 import { default as root } from "./proto.pb.js";
 // import config from "./config.json";
@@ -30,6 +32,17 @@ import { default as root } from "./proto.pb.js";
 
 addStyleSheet(document.body, colors);
 addStyleSheet(document.body, fonts);
+
+document.title = "ATI - Relay Configuration";
+var link = document.querySelector("link[rel~='icon']");
+if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+}
+link.href = icon;
+document.body.classList.add("light-mode");
+
 
 const saveSettings = async () => {
   if (page.value != null) {
@@ -51,13 +64,14 @@ const saveSettings = async () => {
 
     const responseText = await response.text();
 
+    
     if(responseText == "Success") {
-      // location.reload();
+      page.hideSaveContainer(true) 
+      location.reload();
     }
   }
 };
 
-document.body.classList.add("light-mode");
 
 // const header = new Header({ container: document.body });
 const page = new Page({

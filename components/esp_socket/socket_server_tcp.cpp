@@ -75,7 +75,9 @@ esp_err_t SocketServer::on_client_disconnect(client_handler_func_t func)
 
 esp_err_t SocketServer::on_client_recv(client_recv_handler_func_t func)
 {
-  this->on_client_recv_cb = func;
+  if(func){
+    this->on_client_recv_cb = func;
+  }
   return ESP_OK;
 }
 

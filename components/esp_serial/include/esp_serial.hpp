@@ -34,12 +34,14 @@ public:
 
   ~Serial();
 
-  esp_err_t set_pins(int rx_pin, int tx_pin);
-  esp_err_t set_pins(int rx_pin, int tx_pin, int rts_pin, int cts_pin);
+  esp_err_t set_pins(int tx_pin, int rx_pin);
+  esp_err_t set_pins(int tx_pin, int rx_pin, int rts_pin, int cts_pin);
 
   typedef std::function<void(uint8_t *, uint32_t &)> recv_handler_func_t;
   void on_recv(recv_handler_func_t func);
   esp_err_t send_bytes(uint8_t *buf, uint32_t size);
+
+  uint16_t get_port() const { return this->port; };
 
 private:
   int port;
@@ -65,6 +67,7 @@ private:
   int16_t size_tx;
 
   char task_name[16];
+  TaskHandle_t *task_handle;
 
   SemaphoreHandle_t mutex;
 

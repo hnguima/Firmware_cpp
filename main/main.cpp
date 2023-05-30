@@ -9,7 +9,6 @@
 #include <freertos/task.h>
 #include <esp_log.h>
 
-#include "stepper_driver.hpp"
 #include "esp_filesystem.hpp"
 
 #include "esp_wifi_driver.hpp"
@@ -35,7 +34,6 @@
 extern "C" void app_main()
 {
   test_module_init();
-
   mdb_relay_io_init();
 
   FileSystem *file_system = FileSystem::get_instance();
@@ -43,13 +41,16 @@ extern "C" void app_main()
 
   Settings<MainConfig> *main_settings = new Settings<MainConfig>("/data/main.set");
   init_app_info_updater(main_settings);
+  init_safe_reset_event_loop(main_settings);
 
-  Ethernet::init();
+  Ethernet::init(main_settings->obj->ethernet.ip,
+                 main_settings->obj->ethernet.gw,
+                 main_settings->obj->ethernet.mask);
 
-  WifiDriver *wifi_driver = WifiDriver::get_instance();
-  wifi_driver->init_STA(main_settings->obj->wifi.ssid,
-                        main_settings->obj->wifi.password);
-  // wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
+  // WifiDriver *wifi_driver = WifiDriver::get_instance();
+  // wifi_driver->init_STA(main_settings->obj->wifi.ssid,
+  //                       main_settings->obj->wifi.password);
+  // // wifi_driver->init_STA("CLARO_2GA8652A", "38A8652A");
 
   HTTPServer::init();
   HTTPServer *server = HTTPServer::get_instance();
@@ -58,11 +59,11 @@ extern "C" void app_main()
 
   init_settings_http_handler(main_settings);
 
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  FirmwareUpdate fw_update;
+
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 
   WebSocketLog::init();
-
-  FirmwareUpdate fw_update;
 
   if (main_settings->obj->channel_1.enabled)
   {
@@ -73,10 +74,12 @@ extern "C" void app_main()
     mdb_gw_1->config_rtu(UART_NUM_1, temp->rtu_baud_rate, (uart_parity_t)temp->rtu_parity,
                          (uart_stop_bits_t)temp->rtu_stop_bits, (uart_word_length_t)temp->rtu_data_bits);
     mdb_gw_1->set_rtu_timeout(temp->rtu_timeout);
-    mdb_gw_1->set_rtu_pins(2, 4);
+    mdb_gw_1->set_rtu_pins(5, 18, 15, UART_PIN_NO_CHANGE);
 
     mdb_gw_1->set_tcp_timeout(temp->tcp_timeout);
     mdb_gw_1->config_tcp(temp->tcp_port);
+
+    mdb_gw_1->start();
   }
 
   if (main_settings->obj->channel_2.enabled)
@@ -87,9 +90,12 @@ extern "C" void app_main()
     mdb_gw_2->config_rtu(UART_NUM_2, temp->rtu_baud_rate, (uart_parity_t)temp->rtu_parity,
                          (uart_stop_bits_t)temp->rtu_stop_bits, (uart_word_length_t)temp->rtu_data_bits);
     mdb_gw_2->set_rtu_timeout(temp->rtu_timeout);
-    
+    mdb_gw_2->set_rtu_pins(4, 16, 2, UART_PIN_NO_CHANGE);
+
     mdb_gw_2->set_tcp_timeout(temp->tcp_timeout);
-    mdb_gw_2->config_tcp(temp->tcp_port);    
+    mdb_gw_2->config_tcp(temp->tcp_port);
+
+    mdb_gw_2->start();
   }
 
   while (true)

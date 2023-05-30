@@ -83,6 +83,13 @@ Serial::~Serial()
 
   uart_driver_delete(this->port);
 
+  vTaskDelete(*this->task_handle);
+  free(this->task_handle);
+
+  vSemaphoreDelete(this->mutex);
+
+  // vQueueDelete(this->queue);
+
   for (size_t i = 0; i < serial_list.size(); i++)
   {
     if (this->port == serial_list.at(i)->port)
@@ -112,19 +119,20 @@ void Serial::init()
     return;
   }
 
-  ESP_ERROR_CHECK(uart_param_config(this->port, &(this->config)));
+  ESP_ERROR_CHECK_WITHOUT_ABORT(uart_param_config(this->port, &(this->config)));
 
   // Set UART pins (using UART0 default pins ie no changes.)
-  ESP_ERROR_CHECK(uart_set_pin(this->port, this->rx_pin, this->tx_pin, this->rts_pin, this->cts_pin));
+  ESP_ERROR_CHECK_WITHOUT_ABORT(uart_set_pin(this->port, this->rx_pin, this->tx_pin, this->rts_pin, this->cts_pin));
 
-  ESP_ERROR_CHECK(uart_driver_install(this->port, SERIAL_RX_BUFFER_SIZE * 2, SERIAL_TX_BUFFER_SIZE * 2, 20, &(this->queue), 0));
+  ESP_ERROR_CHECK_WITHOUT_ABORT(uart_driver_install(this->port, SERIAL_RX_BUFFER_SIZE * 2, SERIAL_TX_BUFFER_SIZE * 2, 20, &(this->queue), 0));
 
-  ESP_ERROR_CHECK(uart_set_mode(this->port, this->mode));
+  ESP_ERROR_CHECK_WITHOUT_ABORT(uart_set_mode(this->port, this->mode));
 
   sprintf(this->task_name, "Serial[%d]", this->port);
 
   // Create a task to handler UART event from ISR
-  xTaskCreate(Serial::task, this->task_name, 4096, (void *)this, 12, NULL);
+  this->task_handle = (TaskHandle_t *)malloc(sizeof(TaskHandle_t));
+  xTaskCreate(Serial::task, this->task_name, 4096, (void *)this, 12, this->task_handle);
 
   serial_list.push_back(this);
 }
@@ -183,7 +191,7 @@ void Serial::task(void *param)
         break;
       // Event of UART RX break detected
       case UART_BREAK:
-        ESP_LOGI(serial_instance->task_name, "uart rx break");
+        // ESP_LOGI(serial_instance->task_name, "uart rx break");
         break;
       // Event of UART parity check error
       case UART_PARITY_ERR:
@@ -209,27 +217,30 @@ void Serial::task(void *param)
   vTaskDelete(NULL);
 }
 
-esp_err_t Serial::set_pins(int rx_pin, int tx_pin)
+esp_err_t Serial::set_pins(int tx_pin, int rx_pin)
 {
-  return set_pins(rx_pin, tx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+  return this->set_pins(tx_pin, rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 }
 
-esp_err_t Serial::set_pins(int rx_pin, int tx_pin, int rts_pin, int cts_pin)
+esp_err_t Serial::set_pins(int tx_pin, int rx_pin, int rts_pin, int cts_pin)
 {
   this->rx_pin = rx_pin;
   this->tx_pin = tx_pin;
   this->rts_pin = rts_pin;
   this->cts_pin = cts_pin;
 
-  ESP_LOGI(TAG, "uart num: %d", this->port);
+  // ESP_LOGI(TAG, "uart num: %d", this->port);
 
-  return uart_set_pin(this->port, this->rx_pin, this->tx_pin, this->rts_pin, this->cts_pin);
+  vTaskDelay(10 / portTICK_PERIOD_MS);
+
+  return uart_set_pin(this->port, this->tx_pin, this->rx_pin, this->rts_pin, this->cts_pin);
 }
 
 void Serial::on_recv(recv_handler_func_t func)
 {
   this->on_recv_cb = func;
 }
+
 esp_err_t Serial::send_bytes(uint8_t *buffer, uint32_t size)
 {
   esp_err_t err = ESP_OK;

@@ -11,7 +11,7 @@
 #include "esp_serial.hpp"
 
 #define MODBUS_GATEWAY_MAX_TCP_RETRIES 5
-#define MODBUS_GATEWAY_MAX_RTU_RETRIES 5
+#define MODBUS_GATEWAY_MAX_RTU_RETRIES 50
 
 class ModbusConverter;
 class ModbusGateway
@@ -28,11 +28,13 @@ public:
                   uart_parity_t parity, uart_stop_bits_t stop_bits,
                   uart_word_length_t data_bits);
 
-  esp_err_t set_rtu_pins(int rx_pin, int tx_pin);
-  esp_err_t set_rtu_pins(int rx_pin, int tx_pin, int rts_pin, int cts_pin);
+  esp_err_t set_rtu_pins(int tx_pin, int rx_pin);
+  esp_err_t set_rtu_pins(int tx_pin, int rx_pin, int rts_pin, int cts_pin);
 
   void set_rtu_timeout(uint32_t timeout);
   void set_tcp_timeout(uint32_t timeout);
+
+  void start();
 
 private:
   SocketServer *server;
@@ -71,8 +73,6 @@ private:
   void init_rtu(uint32_t uart_port, uint32_t baud_rate,
                 uart_parity_t parity, uart_stop_bits_t stop_bits,
                 uart_word_length_t data_bits);
-
-  void wait_for_config();
 
   char task_name[32];
   static void task(void *param);

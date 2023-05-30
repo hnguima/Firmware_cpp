@@ -16,7 +16,7 @@ def on_error(ws, err):
   
 
 def run_ws():
-  ws = websocket.WebSocketApp(sys.argv[1],
+  ws = websocket.WebSocketApp("ws://" + sys.argv[1] + "/ws_log",
   on_message = on_message,
   on_error = on_error,
   on_open = on_open)

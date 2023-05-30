@@ -5,4 +5,6 @@ RUN apt-get update && apt-get install -y \
     npm
 RUN npm install npm@latest -g && \
     npm install n -g && \
-    n latest
+    npm install -g protobufjs protobufjs-cli\
+    n latest \
+    pip install protobuf grpcio-tools 

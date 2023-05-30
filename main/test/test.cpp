@@ -11,22 +11,11 @@
 
 static const char *TAG = "test_module";
 
-// GenericTest test_1(
-//     "test 1", __LINE__, __FILE__,
-//     []()
-//     {
-//       ESP_LOGI("test1", "Testing test 1");
-//     });
-
-// GenericTest test_2(
-//     "test 2", __LINE__, __FILE__,
-//     []()
-//     {
-//       ESP_LOGI("test2", "Testing test 2");
-//     });
-
 void test_module_init()
 {
+
+  ESP_LOGI(TAG, "Running TEST INIT FUNC");
+
   TestManager *test_manager = new TestManager(
       []() -> bool
       {
@@ -55,3 +44,4 @@ void test_module_init()
 
   test_manager->run_menu();
 }
+
